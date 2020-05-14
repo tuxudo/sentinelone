@@ -58,7 +58,7 @@ class Sentinelone_model extends \Model
                     $this->$item = $plist[$search];
                 }
             } else {
-                $this->$item = '';
+                $this->$item = null;
             }
         }
         $this->id = '';
