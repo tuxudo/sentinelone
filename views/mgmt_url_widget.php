@@ -1,10 +1,10 @@
     <div class="col-lg-4 col-md-6">
-    <div class="panel panel-default" id="mgmt-url-widget">
-        <div class="panel-heading" data-container="body" >
-            <h3 class="panel-title"><i class="fa fa-compass"></i>
+    <div class="card" id="mgmt-url-widget">
+        <div class="card-header" data-container="body" >
+            <i class="fa fa-compass"></i>
                 <span data-i18n="sentinelone.mgmt_url"></span>
-                <list-link data-url="/show/listing/sentinelone/sentinelone"></list-link>
-            </h3>
+                <a href="/show/listing/sentinelone/sentinelone" class="pull-right"><i class="fa fa-list"></i></a>
+            
         </div>
         <div class="list-group scroll-box"></div>
     </div><!-- /panel -->
