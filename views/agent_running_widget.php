@@ -1,17 +1,17 @@
 <div class="col-lg-4 col-md-6">
 
-    <div id="agent-running-widget" class="panel panel-default">
+    <div id="agent-running-widget" class="card">
 
-        <div class="panel-heading">
+        <div class="card-header">
 
-            <h3 class="panel-title"><i class="fa fa-check-circle"></i>
+            <i class="fa fa-check-circle"></i>
                 <span data-i18n="sentinelone.agent_running"></span>
-                <list-link data-url="/show/listing/sentinelone/sentinelone"></list-link>
-            </h3>
+                <a href="/show/listing/sentinelone/sentinelone" class="pull-right"><i class="fa fa-list"></i></a>
+            
 
         </div>
 
-        <div class="panel-body text-center">
+        <div class="card-body text-center">
 
 
             <a id="ar-not_running" class="btn btn-danger disabled">

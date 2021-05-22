@@ -1,17 +1,17 @@
 <div class="col-lg-4 col-md-6">
 
-    <div id="enforcing-security-widget" class="panel panel-default">
+    <div id="enforcing-security-widget" class="card">
 
-        <div class="panel-heading">
+        <div class="card-header">
 
-            <h3 class="panel-title"><i class="fa fa-shield"></i>
+            <i class="fa fa-shield"></i>
                 <span data-i18n="sentinelone.enforcing_security"></span>
-                <list-link data-url="/show/listing/sentinelone/sentinelone"></list-link>
-            </h3>
+                <a href="/show/listing/sentinelone/sentinelone" class="pull-right"><i class="fa fa-list"></i></a>
+            
 
         </div>
 
-        <div class="panel-body text-center">
+        <div class="card-body text-center">
 
 
             <a id="es-not_enforced" class="btn btn-danger disabled">
