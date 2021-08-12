@@ -1,52 +1,79 @@
 #!/usr/bin/python
+'''Gathers information from SentintelOne sentinelctl binary. Calls once for
+each sub-category ("filter") to avoid a ton of processing overhead - there
+is no structured data format available here anymore.'''
 
 import subprocess
-import json
 import sys
 import os
-import plistlib
 import dateutil.parser as dp
+sys.path.insert(0, '/usr/local/munki')
+sys.path.insert(0, '/usr/local/munkireport')
 
-def dict_clean(items):
-    result = {}
-    for key, value in items:
-        if value is None:
-            value = 'None'
-        result[key] = value
-    return result
+from munkilib import FoundationPlist
+#pylint: disable=C0103
+#pylint: disable=C0301
 
-def main():
+
+def get_status_data(s1_filter):
+    '''Runs the status command with the specified filter string'''
     s1_binary = '/Library/Sentinel/sentinel-agent.bundle/Contents/MacOS/sentinelctl'
 
-    # Skip manual check
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'manualcheck':
-            print 'Manual check: skipping'
-            exit(0)
-
     if os.path.isfile(s1_binary):
-        # Create cache dir if it does not exist
-        cachedir = '%s/cache' % os.path.dirname(os.path.realpath(__file__))
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
-
-        summary_command = [s1_binary, 'summary', 'json']
-        task = subprocess.Popen(summary_command,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-
-        (stdout, stderr) = task.communicate()
-        # Sentinel One's output has a header of "Summary information" that needs to be stripped off to be proper json
-        s1_summary = json.loads(stdout.split('\n',1)[1], object_pairs_hook=dict_clean)
-        # convert the ISO time to epoch time and store back in the variable
-        s1_summary['last-seen'] = dp.parse(s1_summary['last-seen']).strftime('%s')
-
-        # Write to disk
-        output_plist = os.path.join(cachedir, 'sentinelone.plist')
-        plistlib.writePlist(s1_summary, output_plist)
+        cmd = [s1_binary, 'status', '--filters', s1_filter]
+        sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = sp.communicate()
+        if sp.returncode != 0:
+            print("Error trying to execute status with filter %s: %s" % (s1_filter, err))
+            sys.exit(1)
+        else:
+            # Strip out the line containing the filter name, then map to dict. Skip last line
+            # as sentinelctl currently puts a blank newline at the end which breaks the map.
+            out = str(''.join(out.decode('UTF-8').splitlines(True)[1:]))
+            return dict(map(lambda s : map(str.strip, s.split(':', 1)), out.split('\n')[:-1]))
     else:
-        print "SentinelOne's sentinelctl binary missing. Exiting."
-        exit(0)
+        print("sentinelctl binary is missing - exiting")
+        sys.exit(1)
+
+
+def main():
+    '''main function'''
+    cachedir = '%s/cache' % os.path.dirname(os.path.realpath(__file__))
+    if not os.path.exists(cachedir):
+        os.makedirs(cachedir)
+
+    agent_data = get_status_data("Agent")
+    mgmt_data = get_status_data("Management")
+
+    # Build results dict that is compatible with the existing model
+    result = {}
+    # Translate bool values
+    if "yes" in agent_data['Infected']:
+        result.update({'active-threats-present': "1"})
+    else:
+        result.update({'active-threats-present': "0"})
+    if "yes" in agent_data['Ready']:
+        result.update({'agent-running': "1"})
+    else:
+        result.update({'agent-running': "0"})
+    if "started" in agent_data['ES Framework']:
+        result.update({'enforcing-security': "1"})
+    else:
+        result.update({'enforcing-security': "0"})
+    if "enabled" in agent_data['Protection']:
+        result.update({'self-protection-enabled': "1"})
+    else:
+        result.update({'self-protection-enabled': "0"})
+
+    # Rest of values can be sent relatively cleanly
+    result.update({'agent-version': agent_data['Version']})
+    result.update({'agent-id': agent_data['ID']})
+    result.update({'last-seen': dp.parse(mgmt_data['Last Seen']).strftime('%s')})
+    result.update({'mgmt-url': mgmt_data['Server']})
+
+    # Write results of checks to cache file
+    output_plist = os.path.join(cachedir, 'sentinelone.plist')
+    FoundationPlist.writePlist(result, output_plist)
 
 if __name__ == "__main__":
     main()
