@@ -1,6 +1,5 @@
 {
     "name": "munkireport/sentinelone",
     "description": "Module for munkireport.",
-    "license": "MIT",
-    "version": "6.0.2"
+    "license": "MIT"
 }
